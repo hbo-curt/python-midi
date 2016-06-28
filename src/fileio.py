@@ -46,15 +46,28 @@ class FileReader(object):
     def parse_track(self, midifile, track):
         self.RunningStatus = None
         offset = 0
+        pool = {}
         trksz = self.parse_track_header(midifile)
         trackdata = iter(midifile.read(trksz))
         while True:
             try:
                 event = self.parse_midi_event(trackdata, offset)
-                track.append(event)
+                if type(event) is NoteOnEvent:
+                    pool.setdefault(event.pitch, []).append(event)
+                    track.append(event)
+                elif type(event) is NoteOffEvent:
+                    try:
+                        pool[event.pitch].pop().off=event
+                    except:
+                        warn("errant note off: {0}".format(event.pitch))
+                else:
+                    track.append(event)
                 offset += event.tick
             except StopIteration:
+                if filter(lambda k: len(pool[k])>0, pool):
+                    warn("unresolved note ons")
                 break
+
 
     def parse_midi_event(self, trackdata, offset):
         # first datum is varlen representing delta-time

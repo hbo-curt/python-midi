@@ -16,8 +16,7 @@ def get_sequencer_type():
 
 class TestIO(unittest.TestCase):
     def test_read(self):
-        doc = midi.read_midifile("./data/mary.mid")
-        print dir(doc)
+        doc = midi.read_midifile("./data/overlap.mid")
 
 class TestMIDI(unittest.TestCase):
     def test_varlen(self):

@@ -128,6 +128,7 @@ class NoteEvent(Event):
     velocity = property(get_velocity, set_velocity)
 
 class NoteOnEvent(NoteEvent):
+    __slots__ = ['off']
     statusmsg = 0x90
     name = 'Note On'
 
