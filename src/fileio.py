@@ -12,7 +12,7 @@ class FileReader(object):
         for track in pattern:
             self.parse_track(midifile, track)
         return pattern
-        
+
     def parse_file_header(self, midifile):
         # First four bytes are MIDI header
         magic = midifile.read(4)
@@ -33,7 +33,7 @@ class FileReader(object):
         if hdrsz > DEFAULT_MIDI_HEADER_SIZE:
             midifile.read(hdrsz - DEFAULT_MIDI_HEADER_SIZE)
         return Pattern(tracks=tracks, resolution=resolution, format=format)
-            
+
     def parse_track_header(self, midifile):
         # First four bytes are Track header
         magic = midifile.read(4)
@@ -45,16 +45,18 @@ class FileReader(object):
 
     def parse_track(self, midifile, track):
         self.RunningStatus = None
+        offset = 0
         trksz = self.parse_track_header(midifile)
         trackdata = iter(midifile.read(trksz))
         while True:
             try:
-                event = self.parse_midi_event(trackdata)
+                event = self.parse_midi_event(trackdata, offset)
                 track.append(event)
+                offset += event.tick
             except StopIteration:
                 break
 
-    def parse_midi_event(self, trackdata):
+    def parse_midi_event(self, trackdata, offset):
         # first datum is varlen representing delta-time
         tick = read_varlen(trackdata)
         # next byte is status message
@@ -69,7 +71,7 @@ class FileReader(object):
                 cls = EventRegistry.MetaEvents[cmd]
             datalen = read_varlen(trackdata)
             data = [ord(trackdata.next()) for x in range(datalen)]
-            return cls(tick=tick, data=data, metacommand=cmd)
+            return cls(tick=tick, offset=tick+offset, data=data, metacommand=cmd)
         # is this event a Sysex Event?
         elif SysexEvent.is_event(stsmsg):
             data = []
@@ -78,7 +80,7 @@ class FileReader(object):
                 if datum == 0xF7:
                     break
                 data.append(datum)
-            return SysexEvent(tick=tick, data=data)
+            return SysexEvent(tick=tick, offset=offset+tick, data=data)
         # not a Meta MIDI event or a Sysex event, must be a general message
         else:
             key = stsmsg & 0xF0
@@ -90,14 +92,14 @@ class FileReader(object):
                 channel = self.RunningStatus & 0x0F
                 data.append(stsmsg)
                 data += [ord(trackdata.next()) for x in range(cls.length - 1)]
-                return cls(tick=tick, channel=channel, data=data)
+                return cls(tick=tick, offset=offset+tick, channel=channel, data=data)
             else:
                 self.RunningStatus = stsmsg
                 cls = EventRegistry.Events[key]
                 channel = self.RunningStatus & 0x0F
                 data = [ord(trackdata.next()) for x in range(cls.length)]
-                return cls(tick=tick, channel=channel, data=data)
-        raise Warning, "Unknown MIDI Event: " + `stsmsg`
+                return cls(tick=tick, offset=offset+tick, channel=channel, data=data)
+
 
 class FileWriter(object):
     def write(self, midifile, pattern):
@@ -107,12 +109,12 @@ class FileWriter(object):
 
     def write_file_header(self, midifile, pattern):
         # First four bytes are MIDI header
-        packdata = pack(">LHHH", 6,    
-                            pattern.format, 
+        packdata = pack(">LHHH", 6,
+                            pattern.format,
                             len(pattern),
                             pattern.resolution)
         midifile.write('MThd%s' % packdata)
-            
+
     def write_track(self, midifile, track):
         buf = ''
         self.RunningStatus = None

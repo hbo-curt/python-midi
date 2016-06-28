@@ -20,7 +20,7 @@ class EventRegistry(object):
 
 
 class AbstractEvent(object):
-    __slots__ = ['tick', 'data']
+    __slots__ = ['tick', 'offset', 'data']
     name = "Generic MIDI Event"
     length = 0
     statusmsg = 0x0
@@ -37,6 +37,7 @@ class AbstractEvent(object):
         else:
             defdata = []
         self.tick = 0
+        self.offset = 0
         self.data = defdata
         for key in kw:
             setattr(self, key, kw[key])
@@ -138,13 +139,13 @@ class AfterTouchEvent(Event):
     statusmsg = 0xA0
     length = 2
     name = 'After Touch'
-    
+
     def get_pitch(self):
         return self.data[0]
     def set_pitch(self, val):
         self.data[0] = val
     pitch = property(get_pitch, set_pitch)
-    
+
     def get_value(self):
         return self.data[1]
     def set_value(self, val):
@@ -226,7 +227,7 @@ class MetaEventWithText(MetaEvent):
         super(MetaEventWithText, self).__init__(**kw)
         if 'text' not in kw:
             self.text = ''.join(chr(datum) for datum in self.data)
-    
+
     def __repr__(self):
         return self.__baserepr__(['text'])
 

@@ -14,19 +14,24 @@ def get_sequencer_type():
         return None
     return sequencer.Sequencer.SEQUENCER_TYPE
 
+class TestIO(unittest.TestCase):
+    def test_read(self):
+        doc = midi.read_midifile("./data/mary.mid")
+        print dir(doc)
+
 class TestMIDI(unittest.TestCase):
-    def test_varlen(self): 
+    def test_varlen(self):
         maxval = 0x0FFFFFFF
         for inval in xrange(0, maxval, maxval / 1000):
             datum = midi.write_varlen(inval)
             outval = midi.read_varlen(iter(datum))
             self.assertEqual(inval, outval)
 
-    def test_mary(self): 
-        midi.write_midifile("mary.mid", mary_test.MARY_MIDI)
-        pattern1 = midi.read_midifile("mary.mid")
-        midi.write_midifile("mary.mid", pattern1)
-        pattern2 = midi.read_midifile("mary.mid")
+    def test_mary(self):
+        midi.write_midifile("./data/mary.mid", mary_test.MARY_MIDI)
+        pattern1 = midi.read_midifile("./data/mary.mid")
+        midi.write_midifile("./data/mary.mid", pattern1)
+        pattern2 = midi.read_midifile("./data/mary.mid")
         self.assertEqual(len(pattern1), len(pattern2))
         for track_idx in range(len(pattern1)):
             self.assertEqual(len(pattern1[track_idx]), len(pattern2[track_idx]))
@@ -47,7 +52,7 @@ class TestSequencerALSA(unittest.TestCase):
         assert loop != None, "Could not find Midi Through port!"
         loop_port = loop.get_port("Midi Through Port-0")
         return (loop.client, loop_port.port)
-    
+
     def get_reader_sequencer(self):
         (client, port) = self.get_loop_client_port()
         seq = sequencer.SequencerRead(sequencer_resolution=self.RESOLUTION)
@@ -59,7 +64,7 @@ class TestSequencerALSA(unittest.TestCase):
         seq = sequencer.SequencerWrite(sequencer_resolution=self.RESOLUTION)
         seq.subscribe_port(client, port)
         return seq
-    
+
     @unittest.skipIf(get_sequencer_type() != "alsa", "ALSA Sequencer not found, skipping test")
     @unittest.skipIf(not os.path.exists("/dev/snd/seq"), "/dev/snd/seq is not available, skipping test")
     def test_loopback_sequencer(self):
