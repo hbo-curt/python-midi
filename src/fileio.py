@@ -64,8 +64,10 @@ class FileReader(object):
                     track.append(event)
                 offset += event.tick
             except StopIteration:
-                if filter(lambda k: len(pool[k])>0, pool):
-                    warn("unresolved note ons")
+                def _concat(a, k): a.extend(pool[k]); return a
+                for event in reduce(_concat, pool, []):
+                    warn("unresolved note: {0} at {1}".format(event.pitch, event.offset))
+                    track.remove(event)
                 break
 
 

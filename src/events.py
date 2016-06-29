@@ -20,25 +20,23 @@ class EventRegistry(object):
 
 
 class AbstractEvent(object):
-    __slots__ = ['tick', 'offset', 'data']
     name = "Generic MIDI Event"
     length = 0
     statusmsg = 0x0
+    __slots__ = ['tick', 'offset', 'data']
 
     class __metaclass__(type):
         def __init__(cls, name, bases, dict):
-            if name not in ['AbstractEvent', 'Event', 'MetaEvent', 'NoteEvent',
-                            'MetaEventWithText']:
+            if name not in ['AbstractEvent', 'Event', 'MetaEvent', 'NoteEvent', 'MetaEventWithText']:
                 EventRegistry.register_event(cls, bases)
 
     def __init__(self, **kw):
-        if type(self.length) == int:
-            defdata = [0] * self.length
-        else:
-            defdata = []
         self.tick = 0
         self.offset = 0
-        self.data = defdata
+        if type(self.length) == int:
+            self.data = [0] * self.length
+        else:
+            self.data = []
         for key in kw:
             setattr(self, key, kw[key])
 
@@ -62,8 +60,8 @@ class AbstractEvent(object):
 
 
 class Event(AbstractEvent):
-    __slots__ = ['channel']
     name = 'Event'
+    __slots__ = ['channel']
 
     def __init__(self, **kw):
         if 'channel' not in kw:
@@ -94,7 +92,6 @@ MetaEvent is a special subclass of Event that is not meant to
 be used as a concrete class.  It defines a subset of Events known
 as the Meta events.
 """
-
 class MetaEvent(AbstractEvent):
     statusmsg = 0xFF
     metacommand = 0x0
@@ -110,10 +107,9 @@ NoteEvent is a special subclass of Event that is not meant to
 be used as a concrete class.  It defines the generalities of NoteOn
 and NoteOff events.
 """
-
 class NoteEvent(Event):
-    __slots__ = ['pitch', 'velocity']
     length = 2
+    __slots__ = ['pitch', 'velocity']
 
     def get_pitch(self):
         return self.data[0]
@@ -127,14 +123,28 @@ class NoteEvent(Event):
         self.data[1] = val
     velocity = property(get_velocity, set_velocity)
 
+    def __repr__(self):
+        return self.__baserepr__(['channel', 'pitch', 'velocity'])
+
+
 class NoteOnEvent(NoteEvent):
-    __slots__ = ['off']
     statusmsg = 0x90
     name = 'Note On'
+    __slots__ = ['off', 'duration']
+
+    def get_duration(self):
+        assert(self.off is not None)
+        return self.off.offset-self.offset
+    duration = property(get_duration)
+
+    def __repr__(self):
+        return self.__baserepr__(['channel', 'pitch', 'velocity', 'duration'])
+
 
 class NoteOffEvent(NoteEvent):
     statusmsg = 0x80
     name = 'Note Off'
+
 
 class AfterTouchEvent(Event):
     statusmsg = 0xA0
@@ -154,10 +164,10 @@ class AfterTouchEvent(Event):
     value = property(get_value, set_value)
 
 class ControlChangeEvent(Event):
-    __slots__ = ['control', 'value']
     statusmsg = 0xB0
     length = 2
     name = 'Control Change'
+    __slots__ = ['control', 'value']
 
     def set_control(self, val):
         self.data[0] = val
@@ -172,10 +182,10 @@ class ControlChangeEvent(Event):
     value = property(get_value, set_value)
 
 class ProgramChangeEvent(Event):
-    __slots__ = ['value']
     statusmsg = 0xC0
     length = 1
     name = 'Program Change'
+    __slots__ = ['value']
 
     def set_value(self, val):
         self.data[0] = val
@@ -184,10 +194,10 @@ class ProgramChangeEvent(Event):
     value = property(get_value, set_value)
 
 class ChannelAfterTouchEvent(Event):
-    __slots__ = ['value']
     statusmsg = 0xD0
     length = 1
     name = 'Channel After Touch'
+    __slots__ = ['value']
 
     def set_value(self, val):
         self.data[1] = val
@@ -196,10 +206,10 @@ class ChannelAfterTouchEvent(Event):
     value = property(get_value, set_value)
 
 class PitchWheelEvent(Event):
-    __slots__ = ['pitch']
     statusmsg = 0xE0
     length = 2
     name = 'Pitch Wheel'
+    __slots__ = ['pitch']
 
     def get_pitch(self):
         return ((self.data[1] << 7) | self.data[0]) - 0x2000
@@ -304,10 +314,10 @@ class EndOfTrackEvent(MetaEvent):
     metacommand = 0x2F
 
 class SetTempoEvent(MetaEvent):
-    __slots__ = ['bpm', 'mpqn']
     name = 'Set Tempo'
     metacommand = 0x51
     length = 3
+    __slots__ = ['bpm', 'mpqn']
 
     def set_bpm(self, bpm):
         self.mpqn = int(float(6e7) / bpm)
@@ -328,10 +338,10 @@ class SmpteOffsetEvent(MetaEvent):
     metacommand = 0x54
 
 class TimeSignatureEvent(MetaEvent):
-    __slots__ = ['numerator', 'denominator', 'metronome', 'thirtyseconds']
     name = 'Time Signature'
     metacommand = 0x58
     length = 4
+    __slots__ = ['numerator', 'denominator', 'metronome', 'thirtyseconds']
 
     def get_numerator(self):
         return self.data[0]
@@ -358,10 +368,10 @@ class TimeSignatureEvent(MetaEvent):
     thirtyseconds = property(get_thirtyseconds, set_thirtyseconds)
 
 class KeySignatureEvent(MetaEvent):
-    __slots__ = ['alternatives', 'minor']
     name = 'Key Signature'
     metacommand = 0x59
     length = 2
+    __slots__ = ['alternatives', 'minor']
 
     def get_alternatives(self):
         d = self.data[0]
