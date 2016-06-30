@@ -52,10 +52,10 @@ class FileReader(object):
         while True:
             try:
                 event = self.parse_midi_event(trackdata, offset)
-                if type(event) is NoteOnEvent:
+                if isinstance(event, NoteOnEvent):
                     pool.setdefault(event.pitch, []).append(event)
                     track.append(event)
-                elif type(event) is NoteOffEvent:
+                elif isinstance(event, NoteOffEvent):
                     try:
                         pool[event.pitch].pop().off=event
                     except:

@@ -6,13 +6,11 @@ class EventRegistry(object):
 
     def register_event(cls, event, bases):
         if (Event in bases) or (NoteEvent in bases):
-            assert event.statusmsg not in cls.Events, \
-                            "Event %s already registered" % event.name
+            assert event.statusmsg not in cls.Events, "Event %s already registered" % event.name
             cls.Events[event.statusmsg] = event
         elif (MetaEvent in bases) or (MetaEventWithText in bases):
             if event.metacommand is not None:
-                assert event.metacommand not in cls.MetaEvents, \
-                                "Event %s already registered" % event.name
+                assert event.metacommand not in cls.MetaEvents, "Event %s already registered" % event.name
                 cls.MetaEvents[event.metacommand] = event
         else:
             raise ValueError, "Unknown bases class in event type: "+event.name
@@ -163,6 +161,7 @@ class AfterTouchEvent(Event):
         self.data[1] = val
     value = property(get_value, set_value)
 
+
 class ControlChangeEvent(Event):
     statusmsg = 0xB0
     length = 2
@@ -181,6 +180,7 @@ class ControlChangeEvent(Event):
         return self.data[1]
     value = property(get_value, set_value)
 
+
 class ProgramChangeEvent(Event):
     statusmsg = 0xC0
     length = 1
@@ -193,6 +193,7 @@ class ProgramChangeEvent(Event):
         return self.data[0]
     value = property(get_value, set_value)
 
+
 class ChannelAfterTouchEvent(Event):
     statusmsg = 0xD0
     length = 1
@@ -204,6 +205,7 @@ class ChannelAfterTouchEvent(Event):
     def get_value(self):
         return self.data[1]
     value = property(get_value, set_value)
+
 
 class PitchWheelEvent(Event):
     statusmsg = 0xE0
@@ -219,6 +221,7 @@ class PitchWheelEvent(Event):
         self.data[1] = (value >> 7) & 0x7F
     pitch = property(get_pitch, set_pitch)
 
+
 class SysexEvent(Event):
     statusmsg = 0xF0
     name = 'SysEx'
@@ -228,10 +231,12 @@ class SysexEvent(Event):
         return (cls.statusmsg == statusmsg)
     is_event = classmethod(is_event)
 
+
 class SequenceNumberMetaEvent(MetaEvent):
     name = 'Sequence Number'
     metacommand = 0x00
     length = 2
+
 
 class MetaEventWithText(MetaEvent):
     def __init__(self, **kw):
@@ -241,6 +246,7 @@ class MetaEventWithText(MetaEvent):
 
     def __repr__(self):
         return self.__baserepr__(['text'])
+
 
 class TextMetaEvent(MetaEventWithText):
     name = 'Text'
@@ -296,6 +302,7 @@ class UnknownMetaEvent(MetaEvent):
         kw['metacommand'] = self.metacommand
         return super(UnknownMetaEvent, self).copy(kw)
 
+
 class ChannelPrefixEvent(MetaEvent):
     name = 'Channel Prefix'
     metacommand = 0x20
@@ -319,19 +326,38 @@ class SetTempoEvent(MetaEvent):
     length = 3
     __slots__ = ['bpm', 'mpqn']
 
-    def set_bpm(self, bpm):
-        self.mpqn = int(float(6e7) / bpm)
     def get_bpm(self):
-        return float(6e7) / self.mpqn
+        """
+        beats/minute
+        :return: float
+        """
+        return 60000000.0 / self.mpqn
+    def set_bpm(self, bpm):
+        self.mpqn = int(60000000.0 / bpm)
     bpm = property(get_bpm, set_bpm)
 
     def get_mpqn(self):
+        """
+        microseconds/beat
+        :return: int
+        """
         assert(len(self.data) == 3)
-        vals = [self.data[x] << (16 - (8 * x)) for x in xrange(3)]
-        return sum(vals)
+        return sum((self.data[x] << (16 - (8 * x)) for x in xrange(3)))
     def set_mpqn(self, val):
         self.data = [(val >> (16 - (8 * x)) & 0xFF) for x in range(3)]
     mpqn = property(get_mpqn, set_mpqn)
+
+    def get_spqn(self):
+        """
+        seconds/beat
+        :return: float
+        """
+        return self.mpqn/float(1000000)
+    spqn = property(get_spqn)
+
+    def __repr__(self):
+        return self.__baserepr__(['bpm'])
+
 
 class SmpteOffsetEvent(MetaEvent):
     name = 'SMPTE Offset'
@@ -367,6 +393,7 @@ class TimeSignatureEvent(MetaEvent):
         self.data[3] = val
     thirtyseconds = property(get_thirtyseconds, set_thirtyseconds)
 
+
 class KeySignatureEvent(MetaEvent):
     name = 'Key Signature'
     metacommand = 0x59
@@ -385,6 +412,7 @@ class KeySignatureEvent(MetaEvent):
     def set_minor(self, val):
         self.data[1] = val
     minor = property(get_minor, set_minor)
+
 
 class SequencerSpecificEvent(MetaEvent):
     name = 'Sequencer Specific'
