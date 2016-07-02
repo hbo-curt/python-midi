@@ -1,9 +1,8 @@
-from __future__ import division
-import unittest
-import midi
-import mary_test
-import time
 import os
+import time
+import unittest
+
+import midi
 
 try:
     import midi.sequencer as sequencer
@@ -15,48 +14,6 @@ def get_sequencer_type():
         return None
     return sequencer.Sequencer.SEQUENCER_TYPE
 
-class TestIO(unittest.TestCase):
-    def test_read(self):
-        pattern = midi.read_midifile("./data/overlap.mid")
-        converter = pattern.get_tick_converter()
-
-
-class TestTickConverter(unittest.TestCase):
-    def test_convert(self):
-        # tempo.mid:
-        #   - resolution: 480
-        #   - tempos: [{0: 30}, {480: 60}, {960: 90}, {1440, 120}]
-        pattern = midi.read_midifile("./data/tempo.mid")
-        converter = pattern.get_tick_converter()
-        self.assertEqual(converter.offset_to_seconds(0), 0)
-        self.assertEqual(converter.offset_to_seconds(480), 60/30*4)
-        self.assertEqual(converter.offset_to_seconds(960), 60/30*4+60/60*4)
-        self.assertEqual(converter.offset_to_seconds(1440), 60/30*4+60/60*4+60/90*4)
-        self.assertEqual(converter.offset_to_seconds(1920), 60/30*4+60/60*4+60/90*4+60/120*4)
-
-
-
-class TestMIDI(unittest.TestCase):
-    def test_varlen(self):
-        maxval = 0x0FFFFFFF
-        for inval in xrange(0, maxval, maxval / 1000):
-            datum = midi.write_varlen(inval)
-            outval = midi.read_varlen(iter(datum))
-            self.assertEqual(inval, outval)
-
-    def test_mary(self):
-        midi.write_midifile("./data/mary.mid", mary_test.MARY_MIDI)
-        pattern1 = midi.read_midifile("./data/mary.mid")
-        midi.write_midifile("./data/mary.mid", pattern1)
-        pattern2 = midi.read_midifile("./data/mary.mid")
-        self.assertEqual(len(pattern1), len(pattern2))
-        for track_idx in range(len(pattern1)):
-            self.assertEqual(len(pattern1[track_idx]), len(pattern2[track_idx]))
-            for event_idx in range(len(pattern1[track_idx])):
-                event1 = pattern1[track_idx][event_idx]
-                event2 = pattern2[track_idx][event_idx]
-                self.assertEqual(event1.tick, event2.tick)
-                self.assertEqual(event1.data, event2.data)
 
 class TestSequencerALSA(unittest.TestCase):
     TEMPO = 120

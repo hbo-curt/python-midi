@@ -95,22 +95,22 @@ class TickConverter():
         :param tempos: collection of SetTempoEvent
         :param resolution:
         """
-        self._tempos = list(tempos)
-        self._resolution = resolution
-        self._tempos.sort(cmp=lambda a, b: a.offset - b.offset)
-        self._offsets = tuple(map(lambda e: e.offset, self._tempos))
-        self._seconds = [0.0]
+        self._tempos=list(tempos)
+        self._resolution=resolution
+        self._tempos.sort(cmp=lambda a, b: a.offset-b.offset)
+        self._offsets=tuple(map(lambda e: e.offset, self._tempos))
+        self._seconds=[0.0]
         for index in range(1, len(self._tempos)):
-            tempo_p = self._tempos[index - 1]
-            tempo_c = self._tempos[index]
-            self._seconds.append(self._seconds[index - 1] + self._ticks_at_tempo_to_seconds(tempo_c.offset - tempo_p.offset, tempo_c))
+            tempo_p=self._tempos[index-1]
+            tempo_c=self._tempos[index]
+            self._seconds.append(self._seconds[index-1]+self._ticks_at_tempo_to_seconds(tempo_c.offset-tempo_p.offset, tempo_p))
 
     def offset_to_seconds(self, offset):
-        index = bisect.bisect_right(self._offsets, offset) - 1
-        return self._seconds[index] + self._ticks_at_tempo_to_seconds(offset - self._offsets[index], self._tempos[index])
+        index=bisect.bisect_right(self._offsets, offset)-1
+        return self._seconds[index]+self._ticks_at_tempo_to_seconds(offset-self._offsets[index], self._tempos[index])
 
     def event_to_seconds(self, event):
         return self.offset_to_seconds(event.offset)
 
     def _ticks_at_tempo_to_seconds(self, ticks, tempo):
-        return (ticks / float(self._resolution)) * tempo.spqn
+        return (ticks/float(self._resolution))*tempo.spqn

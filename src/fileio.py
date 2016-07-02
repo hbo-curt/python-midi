@@ -52,16 +52,15 @@ class FileReader(object):
         while True:
             try:
                 event = self.parse_midi_event(trackdata, offset)
-                if isinstance(event, NoteOnEvent):
-                    pool.setdefault(event.pitch, []).append(event)
-                    track.append(event)
-                elif isinstance(event, NoteOffEvent):
+                if isinstance(event, NoteOffEvent):
                     try:
                         pool[event.pitch].pop().off=event
                     except:
                         warn("errant note off: {0}".format(event.pitch))
                 else:
                     track.append(event)
+                    if isinstance(event, NoteOnEvent):
+                        pool.setdefault(event.pitch, []).append(event)
                 offset += event.tick
             except StopIteration:
                 def _concat(a, k): a.extend(pool[k]); return a
@@ -113,6 +112,11 @@ class FileReader(object):
                 cls = EventRegistry.Events[key]
                 channel = self.RunningStatus & 0x0F
                 data = [ord(trackdata.next()) for x in range(cls.length)]
+                # catch the unfortunate running status usage of note on to specify a note off
+                if key==NoteOnEvent.statusmsg and data[1]==0:
+                    cls = EventRegistry.Events[NoteOffEvent.statusmsg]
+                else:
+                    cls = EventRegistry.Events[key]
                 return cls(tick=tick, offset=offset+tick, channel=channel, data=data)
 
 
