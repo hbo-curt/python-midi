@@ -4,17 +4,20 @@ import os
 from setuptools import setup, Extension
 import setuptools.command.install
 
-__base__ = {
-    'name':'midi', 
-    'version':'v0.2.3',
-    'description':'Python MIDI API',
-    'author':'giles hall',
-    'author_email':'ghall@csh.rit.edu',
-    'package_dir':{'midi':'src'},
-    'py_modules':['midi.containers', 'midi.__init__', 'midi.events', 'midi.util', 'midi.fileio', 'midi.constants'],
-    'ext_modules':[],
-    'ext_package':'',
-    'scripts':['scripts/mididump.py', 'scripts/mididumphw.py', 'scripts/midiplay.py'],
+__base__={
+    'name': 'midi',
+    'version': 'v0.3.0',
+    'description': 'Python MIDI API',
+    'author': 'giles hall',
+    'author_email': 'ghall@csh.rit.edu',
+    'maintainer': 'curt elsasser',
+    'package_dir': {
+        'midi': 'src'
+        },
+    'py_modules': ['midi.__init__', 'midi.containers', 'midi.events', 'midi.util', 'midi.fileio', 'midi.constants'],
+    'ext_modules': [],
+    'ext_package': '',
+    'scripts': ['scripts/mididump.py']
 }
 
 # this kludge ensures we run the build_ext first before anything else
@@ -51,6 +54,7 @@ def setup_alsa(ns):
     ns['py_modules'].append('midi.sequencer.__init__')
     ns['py_modules'].append('midi.sequencer.sequencer')
     ns['py_modules'].append('midi.sequencer.sequencer_alsa')
+    ns['scripts'].extend(('scripts/midiplay.py', 'scripts/mididumphw.py'))
     ns['ext_package'] = 'midi.sequencer'
     ns['cmdclass'] = {'install': Install_Command_build_ext_first}
 

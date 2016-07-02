@@ -1,6 +1,7 @@
 tests/data/mary.mid
-
+midi.egg-info
 build
+
 *.pyc
 .coverage
 .*.sw?
