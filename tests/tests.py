@@ -1,3 +1,4 @@
+from __future__ import division
 import unittest
 import midi
 import mary_test
@@ -18,7 +19,21 @@ class TestIO(unittest.TestCase):
     def test_read(self):
         pattern = midi.read_midifile("./data/overlap.mid")
         converter = pattern.get_tick_converter()
-        offset = converter.offset_to_seconds(pattern[0][10])
+
+
+class TestTickConverter(unittest.TestCase):
+    def test_convert(self):
+        # tempo.mid:
+        #   - resolution: 480
+        #   - tempos: [{0: 30}, {480: 60}, {960: 90}, {1440, 120}]
+        pattern = midi.read_midifile("./data/tempo.mid")
+        converter = pattern.get_tick_converter()
+        self.assertEqual(converter.offset_to_seconds(0), 0)
+        self.assertEqual(converter.offset_to_seconds(480), 60/30*4)
+        self.assertEqual(converter.offset_to_seconds(960), 60/30*4+60/60*4)
+        self.assertEqual(converter.offset_to_seconds(1440), 60/30*4+60/60*4+60/90*4)
+        self.assertEqual(converter.offset_to_seconds(1920), 60/30*4+60/60*4+60/90*4+60/120*4)
+
 
 
 class TestMIDI(unittest.TestCase):

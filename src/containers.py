@@ -103,12 +103,14 @@ class TickConverter():
         for index in range(1, len(self._tempos)):
             tempo_p = self._tempos[index - 1]
             tempo_c = self._tempos[index]
-            self._seconds.append(self._seconds[index - 1] + self._ticks_at_tempo_to_seconds(tempo_c.offset - tempo_p.offset, tempo_c.mpqn))
+            self._seconds.append(self._seconds[index - 1] + self._ticks_at_tempo_to_seconds(tempo_c.offset - tempo_p.offset, tempo_c))
 
     def offset_to_seconds(self, offset):
-        index = bisect.bisect_right(self._offsets, offset.offset) - 1
-        return self._seconds[index] + self._ticks_at_tempo_to_seconds(offset.offset - self._offsets[index], self._tempos[index])
+        index = bisect.bisect_right(self._offsets, offset) - 1
+        return self._seconds[index] + self._ticks_at_tempo_to_seconds(offset - self._offsets[index], self._tempos[index])
 
+    def event_to_seconds(self, event):
+        return self.offset_to_seconds(event.offset)
 
     def _ticks_at_tempo_to_seconds(self, ticks, tempo):
         return (ticks / float(self._resolution)) * tempo.spqn

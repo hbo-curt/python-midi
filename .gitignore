@@ -1,3 +1,5 @@
+tests/data/mary.mid
+
 build
 *.pyc
 .coverage
