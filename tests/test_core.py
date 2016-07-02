@@ -18,6 +18,8 @@ class TestIO(unittest.TestCase):
     def test_track_text(self):
         self.assertEqual(self.pattern[0].get_text(midi.TrackNameEvent.metacommand), "Classic Electric Piano")
         self.assertEqual(self.pattern[0].get_text(midi.InstrumentNameEvent.metacommand), "curt")
+        self.assertEqual(self.pattern[0].get_text(-1, "literal"), "literal")
+        self.assertEqual(self.pattern[0].get_text(-1, lambda: "expression"), "expression")
 
 class TestTickConverter(unittest.TestCase):
     def test_convert(self):

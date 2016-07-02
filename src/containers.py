@@ -57,9 +57,11 @@ class Track(list):
         self.tick_relative = tick_relative
         super(Track, self).__init__(events)
 
-    def get_text(self, metacommand):
-        result=util.find(lambda e: isinstance(e, events.MetaEventWithText) and e.metacommand==metacommand, self)
-        return getattr(result, "text", None)
+    def get_text(self, metacommand, dfault=None):
+        result=getattr(util.find(lambda e: isinstance(e, events.MetaEventWithText) and e.metacommand==metacommand, self), "text", None)
+        if result is not None:
+            return result
+        return dfault() if callable(dfault) else dfault
 
     def make_ticks_abs(self):
         if (self.tick_relative):
