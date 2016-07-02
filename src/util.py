@@ -36,3 +36,9 @@ def write_varlen(value):
         res = chr1
     return res
 
+def find(cmp, sequence):
+    if cmp is not None:
+        for o in sequence:
+            if cmp(o):
+                return o
+    return None

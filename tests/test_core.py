@@ -5,14 +5,19 @@ import midi
 
 
 class TestIO(unittest.TestCase):
-    def test_read(self):
-        pattern=midi.read_midifile("./data/overlap.mid")
-        self.assertEqual(pattern.resolution, 480)
-        self.assertEqual(len(pattern), 1)
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.SetTempoEvent), pattern[0])), 1)
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOffEvent), pattern[0])), 0)
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOnEvent), pattern[0])), 4)
+    def setUp(self):
+        self.pattern=midi.read_midifile("./data/overlap.mid")
+        self.assertEqual(self.pattern.resolution, 480)
+        self.assertEqual(len(self.pattern), 1)
 
+    def test_read(self):
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.SetTempoEvent), self.pattern[0])), 1)
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOffEvent), self.pattern[0])), 0)
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOnEvent), self.pattern[0])), 4)
+
+    def test_track_text(self):
+        self.assertEqual(self.pattern[0].get_text(midi.TrackNameEvent.metacommand), "Classic Electric Piano")
+        self.assertEqual(self.pattern[0].get_text(midi.InstrumentNameEvent.metacommand), "curt")
 
 class TestTickConverter(unittest.TestCase):
     def test_convert(self):

@@ -4,6 +4,7 @@ from pprint import pformat
 
 import bisect
 import events
+import util
 
 
 class Pattern(list):
@@ -55,6 +56,10 @@ class Track(list):
     def __init__(self, events=[], tick_relative=True):
         self.tick_relative = tick_relative
         super(Track, self).__init__(events)
+
+    def get_text(self, metacommand):
+        result=util.find(lambda e: isinstance(e, events.MetaEventWithText) and e.metacommand==metacommand, self)
+        return getattr(result, "text", None)
 
     def make_ticks_abs(self):
         if (self.tick_relative):
