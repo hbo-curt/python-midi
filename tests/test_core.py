@@ -44,6 +44,7 @@ class TestTickConverter(unittest.TestCase):
         self.assertEqual(self.converter.duration_to_seconds(0, 480*4), 60/30*4)
         self.assertAlmostEqual(self.converter.duration_to_seconds(480*2, 480*4), 60/30*2+60/60*2, places=5)
 
+
 class TestMIDI(unittest.TestCase):
     @unittest.skip("skipping until I fix note-off problem")
     def test_varlen(self):

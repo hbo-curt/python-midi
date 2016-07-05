@@ -120,7 +120,13 @@ class TickConverter():
         return self.offset_to_seconds(offset+duration)-self.offset_to_seconds(offset)
 
     def event_to_seconds(self, event):
-        return self.offset_to_seconds(event.offset)
+        """
+        get offset and duration
+        :param event: midi.Event
+        :return: (offset, duration)
+        """
+        offset=self.offset_to_seconds(event.offset)
+        return offset, (self.offset_to_seconds(event.offset+event.duration)-offset)
 
     def _ticks_at_tempo_to_seconds(self, ticks, tempo):
         return (ticks/float(self._resolution))*tempo.spqn
