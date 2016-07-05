@@ -116,6 +116,9 @@ class TickConverter():
         index=bisect.bisect_right(self._offsets, offset)-1
         return self._seconds[index]+self._ticks_at_tempo_to_seconds(offset-self._offsets[index], self._tempos[index])
 
+    def duration_to_seconds(self, offset, duration):
+        return self.offset_to_seconds(offset+duration)-self.offset_to_seconds(offset)
+
     def event_to_seconds(self, event):
         return self.offset_to_seconds(event.offset)
 

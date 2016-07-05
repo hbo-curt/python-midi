@@ -171,6 +171,13 @@ class FileWriter(object):
         return ret
 
 def write_midifile(midifile, pattern):
+    """
+    todo: I broke write when I consolidated note-ons and note-offs.
+    need to work note-offs back into the mix
+    :param midifile:
+    :param pattern:
+    :return:
+    """
     if type(midifile) in (str, unicode):
         midifile = open(midifile, 'wb')
     writer = FileWriter()
