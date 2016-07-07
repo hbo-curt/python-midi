@@ -47,7 +47,7 @@ class Track(list):
 
     def insert_event(self, event, bias="right"):
         function = bisect.bisect_left if bias=="left" else bisect.bisect_right
-        offsets = [event.offset for event in self]
+        offsets = [e.offset for e in self]
         index = function(offsets, event.offset)
         self.insert(index, event)
 

@@ -138,18 +138,11 @@ class FileWriter(object):
         offset = 0
         track = copy.copy(track)
         # insert note-off events for all note-on events
-        for ievent in xrange(len(track)-1, -1, -1):
-            event=track[ievent]
-            if isinstance(event, NoteOnEvent):
-                offset=event.offset+event.duration
-                data=(event.pitch, event.velocity)
-                track.insert_event(NoteOffEvent(channel=event.channel, offset=offset, data=data))
+        for event in filter(lambda event: isinstance(event, NoteOnEvent), track):
+            track.insert_event(NoteOffEvent(channel=event.channel, offset=event.offset+event.duration, data=event.data))
         # append end-o-track event
-        if len(track)>0:
-            event=track[-1]
-            track.append(EndOfTrackEvent(offset=event.offset+getattr(event, "duration", 0)))
-        else:
-            track.append(EndOfTrackEvent(offset=0))
+        event=track[-1] if len(track)>0 else None
+        track.append(EndOfTrackEvent(offset=getattr(event, "offset", 0)))
         # write events and encode the buffer
         self.RunningStatus = None
         for event in track:

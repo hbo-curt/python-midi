@@ -3,22 +3,23 @@ import unittest
 import midi
 
 
-class TestIO(unittest.TestCase):
-    def setUp(self):
-        self.pattern=midi.read_midifile("./data/overlap.mid")
-        self.assertEqual(self.pattern.resolution, 480)
-        self.assertEqual(len(self.pattern), 1)
+class TestMIDI(unittest.TestCase):
+    def test_note_on(self):
+        event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
+        self.assertEqual(event.channel, 0)
+        self.assertEqual(event.offset, 1)
+        self.assertEqual(event.duration, 2)
+        self.assertEqual(event.velocity, 3)
+        self.assertEqual(event.pitch, 4)
+        self.assertEqual(event.data, [4, 3])
 
-    def test_read(self):
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.SetTempoEvent), self.pattern[0])), 1)
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOffEvent), self.pattern[0])), 0)
-        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOnEvent), self.pattern[0])), 4)
+    def test_varlen(self):
+        maxval = 0x0FFFFFFF
+        for inval in xrange(0, maxval, int(maxval / 1000)):
+            datum = midi.write_varlen(inval)
+            outval = midi.read_varlen(iter(datum))
+            self.assertEqual(inval, outval)
 
-    def test_track_text(self):
-        self.assertEqual(self.pattern[0].get_text(midi.TrackNameEvent.metacommand), "Classic Electric Piano")
-        self.assertEqual(self.pattern[0].get_text(midi.InstrumentNameEvent.metacommand), "curt")
-        self.assertEqual(self.pattern[0].get_text(-1, "literal"), "literal")
-        self.assertEqual(self.pattern[0].get_text(-1, lambda: "expression"), "expression")
 
 class TestTickConverter(unittest.TestCase):
     def setUp(self):
@@ -44,33 +45,33 @@ class TestTickConverter(unittest.TestCase):
         self.assertAlmostEqual(self.converter.duration_to_seconds(480*2, 480*4), 60/30*2+60/60*2, places=5)
 
 
-class TestMIDI(unittest.TestCase):
-    def test_note_on(self):
-        event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
-        self.assertEqual(event.channel, 0)
-        self.assertEqual(event.offset, 1)
-        self.assertEqual(event.duration, 2)
-        self.assertEqual(event.velocity, 3)
-        self.assertEqual(event.pitch, 4)
-        self.assertEqual(event.data, [4, 3])
+class TestIO(unittest.TestCase):
+    def setUp(self):
+        self.pattern=midi.read_midifile("./data/overlap.mid")
+        self.assertEqual(self.pattern.resolution, 480)
+        self.assertEqual(len(self.pattern), 1)
 
-    def test_varlen(self):
-        maxval = 0x0FFFFFFF
-        for inval in xrange(0, maxval, int(maxval / 1000)):
-            datum = midi.write_varlen(inval)
-            outval = midi.read_varlen(iter(datum))
-            self.assertEqual(inval, outval)
+    def test_read(self):
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.SetTempoEvent), self.pattern[0])), 1)
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOffEvent), self.pattern[0])), 0)
+        self.assertEqual(len(filter(lambda e: isinstance(e, midi.NoteOnEvent), self.pattern[0])), 4)
 
-    def test_mary(self):
-        pattern1 = midi.read_midifile("./data/tempo.mid")
+    def test_track_text(self):
+        self.assertEqual(self.pattern[0].get_text(midi.TrackNameEvent.metacommand), "Classic Electric Piano")
+        self.assertEqual(self.pattern[0].get_text(midi.InstrumentNameEvent.metacommand), "curt")
+        self.assertEqual(self.pattern[0].get_text(-1, "literal"), "literal")
+        self.assertEqual(self.pattern[0].get_text(-1, lambda: "expression"), "expression")
+
+    def test_write(self):
+        pattern1=midi.read_midifile("./data/tempo.mid")
         midi.write_midifile("./data/test.mid", pattern1)
-        pattern2 = midi.read_midifile("./data/test.mid")
+        pattern2=midi.read_midifile("./data/test.mid")
         self.assertEqual(len(pattern1), len(pattern2))
         for track_idx in range(len(pattern1)):
             self.assertEqual(len(pattern1[track_idx]), len(pattern2[track_idx]))
             for event_idx in range(len(pattern1[track_idx])):
-                event1 = pattern1[track_idx][event_idx]
-                event2 = pattern2[track_idx][event_idx]
+                event1=pattern1[track_idx][event_idx]
+                event2=pattern2[track_idx][event_idx]
                 self.assertEqual(event1.data, event2.data)
 
 
