@@ -21,7 +21,7 @@ class AbstractEvent(object):
     name = "Generic MIDI Event"
     length = 0
     statusmsg = 0x0
-    __slots__ = ['tick', 'offset', 'data']
+    __slots__ = ['offset', 'data']
 
     class __metaclass__(type):
         def __init__(cls, name, bases, dict):
@@ -29,7 +29,6 @@ class AbstractEvent(object):
                 EventRegistry.register_event(cls, bases)
 
     def __init__(self, **kw):
-        self.tick = 0
         self.offset = 0
         if type(self.length) == int:
             self.data = [0] * self.length
@@ -38,13 +37,8 @@ class AbstractEvent(object):
         for key in kw:
             setattr(self, key, kw[key])
 
-    def __cmp__(self, other):
-        if self.tick < other.tick: return -1
-        elif self.tick > other.tick: return 1
-        return cmp(self.data, other.data)
-
     def __baserepr__(self, keys=[]):
-        keys = ['tick'] + keys + ['data']
+        keys = ['offset'] + keys + ['data']
         body = []
         for key in keys:
             val = getattr(self, key)
@@ -66,16 +60,6 @@ class Event(AbstractEvent):
             kw = kw.copy()
             kw['channel'] = 0
         super(Event, self).__init__(**kw)
-
-    def copy(self, **kw):
-        _kw = {'channel': self.channel, 'tick': self.tick, 'data': self.data}
-        _kw.update(kw)
-        return self.__class__(**_kw)
-
-    def __cmp__(self, other):
-        if self.tick < other.tick: return -1
-        elif self.tick > other.tick: return 1
-        return 0
 
     def __repr__(self):
         return self.__baserepr__(['channel'])
@@ -128,12 +112,7 @@ class NoteEvent(Event):
 class NoteOnEvent(NoteEvent):
     statusmsg = 0x90
     name = 'Note On'
-    __slots__ = ['off', 'duration']
-
-    def get_duration(self):
-        assert(self.off is not None)
-        return self.off.offset-self.offset
-    duration = property(get_duration)
+    __slots__ = ['duration']
 
     def __repr__(self):
         return self.__baserepr__(['channel', 'pitch', 'velocity', 'duration'])
@@ -297,10 +276,6 @@ class UnknownMetaEvent(MetaEvent):
     def __init__(self, **kw):
         super(MetaEvent, self).__init__(**kw)
         self.metacommand = kw['metacommand']
-
-    def copy(self, **kw):
-        kw['metacommand'] = self.metacommand
-        return super(UnknownMetaEvent, self).copy(kw)
 
 
 class ChannelPrefixEvent(MetaEvent):

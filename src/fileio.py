@@ -1,3 +1,4 @@
+import copy
 from warnings import *
 
 from containers import *
@@ -54,14 +55,15 @@ class FileReader(object):
                 event = self.parse_midi_event(trackdata, offset)
                 if isinstance(event, NoteOffEvent):
                     try:
-                        pool[event.pitch].pop().off=event
+                        note_on=pool[event.pitch].pop()
+                        note_on.duration=event.offset-note_on.offset
                     except:
                         warn("errant note off: {0}".format(event.pitch))
                 else:
                     track.append(event)
                     if isinstance(event, NoteOnEvent):
                         pool.setdefault(event.pitch, []).append(event)
-                offset += event.tick
+                offset = event.offset
             except StopIteration:
                 def _concat(a, k): a.extend(pool[k]); return a
                 for event in reduce(_concat, pool, []):
@@ -85,7 +87,7 @@ class FileReader(object):
                 cls = EventRegistry.MetaEvents[cmd]
             datalen = read_varlen(trackdata)
             data = [ord(trackdata.next()) for x in range(datalen)]
-            return cls(tick=tick, offset=tick+offset, data=data, metacommand=cmd)
+            return cls(offset=offset+tick, data=data, metacommand=cmd)
         # is this event a Sysex Event?
         elif SysexEvent.is_event(stsmsg):
             data = []
@@ -94,7 +96,7 @@ class FileReader(object):
                 if datum == 0xF7:
                     break
                 data.append(datum)
-            return SysexEvent(tick=tick, offset=offset+tick, data=data)
+            return SysexEvent(offset=offset+tick, data=data)
         # not a Meta MIDI event or a Sysex event, must be a general message
         else:
             key = stsmsg & 0xF0
@@ -106,7 +108,7 @@ class FileReader(object):
                 channel = self.RunningStatus & 0x0F
                 data.append(stsmsg)
                 data += [ord(trackdata.next()) for x in range(cls.length - 1)]
-                return cls(tick=tick, offset=offset+tick, channel=channel, data=data)
+                return cls(offset=offset+tick, channel=channel, data=data)
             else:
                 self.RunningStatus = stsmsg
                 cls = EventRegistry.Events[key]
@@ -117,7 +119,7 @@ class FileReader(object):
                     cls = EventRegistry.Events[NoteOffEvent.statusmsg]
                 else:
                     cls = EventRegistry.Events[key]
-                return cls(tick=tick, offset=offset+tick, channel=channel, data=data)
+                return cls(offset=offset+tick, channel=channel, data=data)
 
 
 class FileWriter(object):
@@ -136,18 +138,28 @@ class FileWriter(object):
 
     def write_track(self, midifile, track):
         buf = ''
+        offset = 0
+        track = copy.copy(track)
+        # insert note-off events so that they get written properly
+        for ievent in xrange(len(track)-1, -1, -1):
+            event=track[ievent]
+            if isinstance(event, NoteOnEvent):
+                offset=event.offset+event.duration
+                data=(event.pitch, event.velocity)
+                track.insert_event(NoteOffEvent(channel=event.channel, offset=offset, data=data))
         self.RunningStatus = None
         for event in track:
-            buf += self.encode_midi_event(event)
+            buf += self.encode_midi_event(event, event.offset-offset)
+            offset = event.offset
         buf = self.encode_track_header(len(buf)) + buf
         midifile.write(buf)
 
     def encode_track_header(self, trklen):
         return 'MTrk%s' % pack(">L", trklen)
 
-    def encode_midi_event(self, event):
+    def encode_midi_event(self, event, tick):
         ret = ''
-        ret += write_varlen(event.tick)
+        ret += write_varlen(tick)
         # is the event a MetaEvent?
         if isinstance(event, MetaEvent):
             ret += chr(event.statusmsg) + chr(event.metacommand)
