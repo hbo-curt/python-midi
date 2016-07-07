@@ -46,9 +46,8 @@ class Track(list):
         super(Track, self).__init__(events)
 
     def insert_event(self, event, bias="right"):
-        function = bisect.bisect_left if bias=="left" else bisect.bisect_right
-        offsets = [e.offset for e in self]
-        index = function(offsets, event.offset)
+        vof = util.bisect_left if bias=="left" else util.bisect_right
+        index = vof(a=self, x=event.offset, vof=lambda o: o.offset)
         self.insert(index, event)
 
     def get_text(self, metacommand, dfault=None):

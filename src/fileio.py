@@ -139,7 +139,7 @@ class FileWriter(object):
         track = copy.copy(track)
         # insert note-off events for all note-on events
         for event in filter(lambda event: isinstance(event, NoteOnEvent), track):
-            track.insert_event(NoteOffEvent(channel=event.channel, offset=event.offset+event.duration, data=event.data))
+            track.insert_event(NoteOffEvent(channel=event.channel, offset=event.offset+event.duration, data=event.data), bias="left")
         # append end-o-track event
         event=track[-1] if len(track)>0 else None
         track.append(EndOfTrackEvent(offset=getattr(event, "offset", 0)))

@@ -3,7 +3,16 @@ import unittest
 import midi
 
 
-class TestMIDI(unittest.TestCase):
+class TestUtil(unittest.TestCase):
+    def test_varlen(self):
+        maxval = 0x0FFFFFFF
+        for inval in xrange(0, maxval, int(maxval / 1000)):
+            datum = midi.write_varlen(inval)
+            outval = midi.read_varlen(iter(datum))
+            self.assertEqual(inval, outval)
+
+
+class TestEvents(unittest.TestCase):
     def test_note_on(self):
         event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
         self.assertEqual(event.channel, 0)
@@ -13,12 +22,18 @@ class TestMIDI(unittest.TestCase):
         self.assertEqual(event.pitch, 4)
         self.assertEqual(event.data, [4, 3])
 
-    def test_varlen(self):
-        maxval = 0x0FFFFFFF
-        for inval in xrange(0, maxval, int(maxval / 1000)):
-            datum = midi.write_varlen(inval)
-            outval = midi.read_varlen(iter(datum))
-            self.assertEqual(inval, outval)
+
+class TestContainers(unittest.TestCase):
+    def test_track_insert(self):
+        track=midi.Track()
+        event=midi.AbstractEvent(offset=0); track.insert_event(event)
+        self.assertEqual(track[0], event)
+        event=midi.AbstractEvent(offset=0); track.insert_event(event, bias="left")
+        self.assertEqual(track[0], event)
+        event=midi.AbstractEvent(offset=0); track.insert_event(event, bias="right")
+        self.assertEqual(track[2], event)
+        event=midi.AbstractEvent(offset=1); track.insert_event(event)
+        self.assertEqual(track[3], event)
 
 
 class TestTickConverter(unittest.TestCase):
