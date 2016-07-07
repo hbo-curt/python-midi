@@ -45,22 +45,26 @@ class TestTickConverter(unittest.TestCase):
 
 
 class TestMIDI(unittest.TestCase):
-    @unittest.skip("skipping until I fix note-off problem")
+    def test_note_on(self):
+        event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
+        self.assertEqual(event.channel, 0)
+        self.assertEqual(event.offset, 1)
+        self.assertEqual(event.duration, 2)
+        self.assertEqual(event.velocity, 3)
+        self.assertEqual(event.pitch, 4)
+        self.assertEqual(event.data, [4, 3])
+
     def test_varlen(self):
         maxval = 0x0FFFFFFF
-        for inval in xrange(0, maxval, maxval / 1000):
+        for inval in xrange(0, maxval, int(maxval / 1000)):
             datum = midi.write_varlen(inval)
             outval = midi.read_varlen(iter(datum))
             self.assertEqual(inval, outval)
 
-    @unittest.skip("skipping until I fix note-off problem")
     def test_mary(self):
-        from tests.data import mary_test
-
-        midi.write_midifile("./data/mary.mid", mary_test.MARY_MIDI)
-        pattern1 = midi.read_midifile("./data/mary.mid")
-        midi.write_midifile("./data/mary.mid", pattern1)
-        pattern2 = midi.read_midifile("./data/mary.mid")
+        pattern1 = midi.read_midifile("./data/tempo.mid")
+        midi.write_midifile("./data/test.mid", pattern1)
+        pattern2 = midi.read_midifile("./data/test.mid")
         self.assertEqual(len(pattern1), len(pattern2))
         for track_idx in range(len(pattern1)):
             self.assertEqual(len(pattern1[track_idx]), len(pattern2[track_idx]))

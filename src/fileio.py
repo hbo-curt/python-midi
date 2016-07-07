@@ -59,7 +59,7 @@ class FileReader(object):
                         note_on.duration=event.offset-note_on.offset
                     except:
                         warn("errant note off: {0}".format(event.pitch))
-                else:
+                elif not isinstance(event, EndOfTrackEvent):
                     track.append(event)
                     if isinstance(event, NoteOnEvent):
                         pool.setdefault(event.pitch, []).append(event)
@@ -130,23 +130,27 @@ class FileWriter(object):
 
     def write_file_header(self, midifile, pattern):
         # First four bytes are MIDI header
-        packdata = pack(">LHHH", 6,
-                            pattern.format,
-                            len(pattern),
-                            pattern.resolution)
-        midifile.write('MThd%s' % packdata)
+        packdata=pack(">LHHH", 6, pattern.format, len(pattern), pattern.resolution)
+        midifile.write('MThd%s'%packdata)
 
     def write_track(self, midifile, track):
         buf = ''
         offset = 0
         track = copy.copy(track)
-        # insert note-off events so that they get written properly
+        # insert note-off events for all note-on events
         for ievent in xrange(len(track)-1, -1, -1):
             event=track[ievent]
             if isinstance(event, NoteOnEvent):
                 offset=event.offset+event.duration
                 data=(event.pitch, event.velocity)
                 track.insert_event(NoteOffEvent(channel=event.channel, offset=offset, data=data))
+        # append end-o-track event
+        if len(track)>0:
+            event=track[-1]
+            track.append(EndOfTrackEvent(offset=event.offset+getattr(event, "duration", 0)))
+        else:
+            track.append(EndOfTrackEvent(offset=0))
+        # write events and encode the buffer
         self.RunningStatus = None
         for event in track:
             buf += self.encode_midi_event(event, event.offset-offset)
