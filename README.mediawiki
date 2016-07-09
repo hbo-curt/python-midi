@@ -1,7 +1,5 @@
-<a href="https://travis-ci.org/vishnubob/python-midi"><img src="https://travis-ci.org/vishnubob/python-midi.svg?branch=master" alt='Build Statis' /></a>
-<a href='https://coveralls.io/github/vishnubob/python-midi?branch=master'><img src='https://coveralls.io/repos/vishnubob/python-midi/badge.svg?branch=master&service=github' alt='Coverage Status' /></a>
-
 =Python MIDI=
+This is a fork of <a href="https://github.com/vishnubob/python-midi">vishnubob/python-midi</a>
 
 Python, for all its amazing ability out of the box, does not provide you with
 an easy means to manipulate MIDI data.  There are probably about ten different
@@ -13,7 +11,7 @@ high level framework that is independent of hardware.  It tries to offer a
 reasonable object granularity to make MIDI streams a painless thing to
 manipulate, sequence, record, and playback.  It's important to have a good
 concept of time, and the event framework provides automatic hooks so you don't
-have to calculate ticks to wall clock, for example. 
+have to calculate ticks to wall clock, for example.
 
 This MIDI Python toolkit represents about two years of scattered work.  If you
 are someone like me, who has spent a long time looking for a Python MIDI
@@ -40,10 +38,10 @@ python setup.py install
 To examine the contents of a MIDI file run
 
 <pre>
-$ mididump.py mary.mid
+$ mididump.py tests/data/tempo.mid
 </pre>
 
-This will print out a representation of "Mary had a Little Lamb" as executable python code.
+This will print out a representation of one of the test MIDI files as text.
 
 ==Example Usage==
 
@@ -76,7 +74,7 @@ midi.write_midifile("example.mid", pattern)
 
 A MIDI file is represented as a hierarchical set of objects.  At the top is a
 Pattern, which contains a list of Tracks, and a Track is is a list of MIDI
-Events.  
+Events.
 
 The MIDI Pattern class inherits from the standard python list, so it supports
 all list features such as append(), extend(), slicing, and iteration.  Patterns
@@ -87,7 +85,7 @@ have any special metadata like Pattern, but it does provide a few helper
 functions to manipulate all events within a track.
 
 There are 27 different MIDI Events supported.  In this example, three different
-MIDI events are created and added to the MIDI Track:  
+MIDI events are created and added to the MIDI Track:
 
 # The NoteOnEvent captures the start of note, like a piano player pushing down on a piano key.  The tick is when this event occurred, the pitch is the note value of the key pressed, and the velocity represents how hard the key was pressed.
 
@@ -105,7 +103,7 @@ In this example, the EndOfTrackEvent would occur at tick 101 (0 + 100 + 1).
 The problem with ticks is that they don't give you any information about when
 they occur without knowing two other pieces of information, the resolution, and
 the tempo.  The code handles these issues for you so all you have to do is
-think about things in terms of milliseconds, or ticks, if you care about the beat.  
+think about things in terms of milliseconds, or ticks, if you care about the beat.
 
 A tick represents the lowest level resolution of a MIDI track.  Tempo is always
 analogous with Beats per Minute (BPM) which is the same thing as Quarter notes
@@ -161,64 +159,4 @@ print pattern
 </pre>
 
 ==Sequencer==
-
-If you use this toolkit under Linux, you can take advantage of ALSA's
-sequencer.  There is a SWIG wrapper and a high level sequencer interface that
-hides the ALSA details as best it can.  This sequencer understands the higher
-level Event framework, and will convert these Events to structures accessible
-to ALSA.  It tries to do as much as the hard work for you as possible, including
-adjusting the queue for tempo changes during playback.  You can also record
-MIDI events, and with the right set of calls, the ALSA sequencer will timestamp
-your MIDI tracks at the moment the event triggers an OS hardware interrupt.
-The timing is extremely accurate, even though you are using Python to manage
-it.
-
-I am extremely interested in supporting OS-X and Win32 sequencers as well, but
-I need platform expert who can help me.  Are you that person?  Please contact
-me if you would like to help.
-
-===Scripts for Sequencer===
-
-To examine the hardware and software MIDI devices attached to your
-system, run the mididumphw.py script.
-
-<pre>
-$ mididumphw.py
-] client(20) "OP-1 Midi Device"
-]   port(0) [r, w, sender, receiver] "OP-1 Midi Device MIDI 1"
-] client(129) "__sequencer__"
-] client(14) "Midi Through"
-]   port(0) [r, w, sender, receiver] "Midi Through Port-0"
-] client(0) "System"
-]   port(1) [r, sender] "Announce"
-]   port(0) [r, w, sender] "Timer"
-] client(128) "FLUID Synth (6438)"
-]   port(0) [w, receiver] "Synth input port (6438:0)"
-</pre>
-
-In the case shown, [http://qsynth.sourceforge.net/qsynth-index.html qsynth]
-is running (client 128), and a hardware synthesizer is attached via
-USB (client 20).
-
-To play the example MIDI file, run the midiplay.py script.
-
-<pre>
-midiplay.py 128 0 mary.mid
-</pre>
-
-==Website, support, bug tracking, development etc.==
-
-You can find the latest code on the home page:
-https://github.com/vishnubob/python-midi/
-
-You can also check for known issues and submit new ones to the
-tracker: https://github.com/vishnubob/python-midi/issues/
-
-==Thanks==
-
-I originally wrote this to drive the electro-mechanical instruments of Ensemble
-Robot, which is a Boston based group of artists, programmers, and engineers.
-This API, however, has applications beyond controlling this equipment.  For
-more information about Ensemble Robot, please visit:
-
-http://www.ensemblerobot.org/
+Everything having to do with the sequencer has been pulled out in this fork.
