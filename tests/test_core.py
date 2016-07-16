@@ -35,6 +35,35 @@ class TestContainers(unittest.TestCase):
         event=midi.AbstractEvent(offset=1); track.insert_event(event)
         self.assertEqual(track[3], event)
 
+    def test_duration_without_duration(self):
+        track=midi.Track()
+        track.insert_event(midi.AbstractEvent(offset=0))
+        track.insert_event(midi.AbstractEvent(offset=1))
+        self.assertEqual(track.duration, 1)
+
+    def test_duration_with_duration(self):
+        track=midi.Track()
+        track.insert_event(midi.AbstractEvent(offset=10))
+        track.insert_event(midi.NoteOnEvent(offset=0, duration=11))
+        self.assertEqual(track.duration, 11)
+
+
+class TestPattern(unittest.TestCase):
+    def test_construction(self):
+        pattern=midi.Pattern(resolution=10, format=11)
+        self.assertEqual(pattern.resolution, 10)
+        self.assertEqual(pattern.format, 11)
+
+    def test_duration(self):
+        pattern=midi.Pattern()
+        track=midi.Track()
+        track.insert_event(midi.AbstractEvent(offset=11))
+        pattern.append(track)
+        track=midi.Track()
+        track.insert_event(midi.AbstractEvent(offset=10))
+        pattern.append(track)
+        self.assertEqual(pattern.duration, 11)
+
 
 class TestTickConverter(unittest.TestCase):
     def setUp(self):

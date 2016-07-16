@@ -6,12 +6,17 @@ import bisect
 import events
 import util
 
-
 class Pattern(list):
-    def __init__(self, tracks=[], resolution=220, format=1):
+    # noinspection PyDefaultArgument
+    def __init__(self, resolution=220, format=1, tracks=[]):
         self.format = format
         self.resolution = resolution
         super(Pattern, self).__init__(tracks)
+
+    #--- public api ---#
+    def get_duration(self):
+        return max([track.duration for track in self])
+    duration=property(get_duration)
 
     def get_tick_converter(self):
         """
@@ -23,15 +28,15 @@ class Pattern(list):
             tempos.extend(filter(lambda e: isinstance(e, events.SetTempoEvent), track))
         return TickConverter(tempos, self.resolution)
 
+    #--- private api ---#
     def __repr__(self):
         return "midi.Pattern(format=%r, resolution=%r, tracks=\\\n%s)" % \
                (self.format, self.resolution, pformat(list(self)))
 
     def __getitem__(self, item):
         if isinstance(item, slice):
-            indices = item.indices(len(self))
-            return Pattern(resolution=self.resolution, format=self.format,
-                           tracks=[super(Pattern, self).__getitem__(i) for i in xrange(*indices)])
+            indices=item.indices(len(self))
+            return Pattern(resolution=self.resolution, format=self.format, tracks=[super(Pattern, self).__getitem__(i) for i in xrange(*indices)])
         else:
             return super(Pattern, self).__getitem__(item)
 
@@ -42,8 +47,14 @@ class Pattern(list):
 
 
 class Track(list):
+    # noinspection PyDefaultArgument
     def __init__(self, events=[]):
         super(Track, self).__init__(events)
+
+    #--- public api ---#
+    def get_duration(self):
+        return max([event.offset+getattr(event, "duration", 0) for event in self])
+    duration=property(get_duration)
 
     def insert_event(self, event, bias="right"):
         vof = util.bisect_left if bias=="left" else util.bisect_right
@@ -56,6 +67,7 @@ class Track(list):
             return result
         return dfault() if callable(dfault) else dfault
 
+    #--- private api ---#
     def __getitem__(self, item):
         if isinstance(item, slice):
             indices = item.indices(len(self))
@@ -105,5 +117,6 @@ class TickConverter():
         offset=self.offset_to_seconds(event.offset)
         return offset, (self.offset_to_seconds(event.offset+event.duration)-offset)
 
+    #--- private api ---#
     def _ticks_at_tempo_to_seconds(self, ticks, tempo):
         return (ticks/float(self._resolution))*tempo.spqn
