@@ -55,7 +55,8 @@ class FileReader(object):
                 event = self.parse_midi_event(trackdata, offset)
                 if isinstance(event, NoteOffEvent):
                     try:
-                        note_on=pool[event.pitch].pop()
+                        # regarding overlapped notes - policy is to resolve the oldest instance
+                        note_on=pool[event.pitch].pop(0)
                         note_on.duration=event.offset-note_on.offset
                     except:
                         warn("errant note off: {0}".format(event.pitch))
