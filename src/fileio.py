@@ -8,6 +8,9 @@ from constants import *
 from util import *
 
 class FileReader(object):
+    def __init__(self):
+        self.running_status=None
+
     def read(self, midifile):
         pattern = self.parse_file_header(midifile)
         for track in pattern:
@@ -45,7 +48,7 @@ class FileReader(object):
         return trksz
 
     def parse_track(self, midifile, track):
-        self.RunningStatus = None
+        self.running_status = None
         offset = 0
         pool = {}
         trksz = self.parse_track_header(midifile)
@@ -102,25 +105,23 @@ class FileReader(object):
         else:
             key = stsmsg & 0xF0
             if key not in EventRegistry.Events:
-                assert self.RunningStatus, "Bad byte value"
-                data = []
-                key = self.RunningStatus & 0xF0
+                assert self.running_status, "Bad byte value"
+                key = self.running_status & 0xF0
                 cls = EventRegistry.Events[key]
-                channel = self.RunningStatus & 0x0F
-                data.append(stsmsg)
-                data += [ord(trackdata.next()) for x in range(cls.length - 1)]
-                return cls(offset=offset+tick, channel=channel, data=data)
+                channel = self.running_status & 0x0F
+                data = [stsmsg] + [ord(trackdata.next()) for x in range(cls.length - 1)]
+                return cls(offset=offset + tick, channel=channel, data=data)
             else:
-                self.RunningStatus = stsmsg
                 cls = EventRegistry.Events[key]
-                channel = self.RunningStatus & 0x0F
+                channel = stsmsg & 0x0F
                 data = [ord(trackdata.next()) for x in range(cls.length)]
-                # catch the unfortunate running status usage of note on to specify a note off
+                # catch usage of note off to specify a note off
                 if key==NoteOnEvent.statusmsg and data[1]==0:
+                    self.running_status = stsmsg - 0x10
                     cls = EventRegistry.Events[NoteOffEvent.statusmsg]
                 else:
-                    cls = EventRegistry.Events[key]
-                return cls(offset=offset+tick, channel=channel, data=data)
+                    self.running_status = stsmsg
+                return cls(offset=offset + tick, channel=channel, data=data)
 
 
 class FileWriter(object):
