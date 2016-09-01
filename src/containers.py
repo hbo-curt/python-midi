@@ -11,6 +11,7 @@ class Pattern(list):
     def __init__(self, resolution=220, format=1, tracks=[]):
         self.format = format
         self.resolution = resolution
+        self.quantized=[resolution*ratio for ratio in (0, 1/64, 1/32, 3/64, 1/16, 3/32, 1/8, 3/16, 1/4, 3/8, 1/2, 2/3, 3/4, 1)]
         super(Pattern, self).__init__(tracks)
 
     #--- public api ---#
@@ -27,6 +28,12 @@ class Pattern(list):
         for track in self:
             tempos.extend(filter(lambda e: isinstance(e, events.SetTempoEvent), track))
         return TickConverter(tempos, self.resolution)
+
+    def nearest_quantized_duration(self, duration):
+        for index in range(1, len(self.quantized)):
+            if duration<=self.quantized[index]:
+                return self.quantized[index] if self.quantized[index]-duration<duration-self.quantized[index-1] else self.quantized[index-1]
+        return self.quantized[-1]
 
     #--- private api ---#
     def __repr__(self):
