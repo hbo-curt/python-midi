@@ -11,7 +11,7 @@ class Pattern(list):
     def __init__(self, resolution=220, format=1, tracks=[]):
         self.format = format
         self.resolution = resolution
-        self.quantized=[resolution*ratio for ratio in (0, 1/64, 1/32, 3/64, 1/16, 3/32, 1/8, 3/16, 1/4, 3/8, 1/2, 2/3, 3/4, 1)]
+        self.quantized=[int(resolution*ratio) for ratio in (1/resolution, 1/64, 3/128, 1/32, 3/64, 1/16, 3/32, 1/8, 3/16, 1/4, 3/8, 1/2, 2/3, 3/4, 1)]
         super(Pattern, self).__init__(tracks)
 
     #--- public api ---#
