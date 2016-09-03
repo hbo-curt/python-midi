@@ -66,7 +66,7 @@ class TestPattern(unittest.TestCase):
 
     def test_quantize(self):
         pattern=midi.Pattern(resolution=64)
-        values=((128, 64), (65, 64), (64, 64), (63, 64), (49, 48), (47, 48), (33, 32), (15, 16), (4, 4), (3, 3), (1, 1), (0, 1))
+        values=((128, 128), (65, 64), (64, 64), (63, 64), (49, 48), (47, 48), (33, 32), (15, 16), (4, 4), (3, 3), (1, 1), (0, 1))
         for v in values:
             self.assertEqual(pattern.nearest_quantized_duration(v[0]), v[1])
 
