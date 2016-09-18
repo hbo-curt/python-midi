@@ -103,6 +103,13 @@ class FileReader(object):
             return SysexEvent(offset=offset+tick, data=data)
         # not a Meta MIDI event or a Sysex event, must be a general message
         else:
+            def _create_event():
+                # catch usage of note off to specify a note off
+                if key==NoteOnEvent.statusmsg and data[1]==0:
+                    return EventRegistry.Events[NoteOffEvent.statusmsg](offset=offset + tick, channel=channel, data=data)
+                else:
+                    return cls(offset=offset + tick, channel=channel, data=data)
+
             key = stsmsg & 0xF0
             if key not in EventRegistry.Events:
                 assert self.running_status, "Bad byte value"
@@ -110,18 +117,13 @@ class FileReader(object):
                 cls = EventRegistry.Events[key]
                 channel = self.running_status & 0x0F
                 data = [stsmsg] + [ord(trackdata.next()) for x in range(cls.length - 1)]
-                return cls(offset=offset + tick, channel=channel, data=data)
+                return _create_event()
             else:
+                self.running_status = stsmsg
                 cls = EventRegistry.Events[key]
                 channel = stsmsg & 0x0F
                 data = [ord(trackdata.next()) for x in range(cls.length)]
-                # catch usage of note off to specify a note off
-                if key==NoteOnEvent.statusmsg and data[1]==0:
-                    self.running_status = stsmsg - 0x10
-                    cls = EventRegistry.Events[NoteOffEvent.statusmsg]
-                else:
-                    self.running_status = stsmsg
-                return cls(offset=offset + tick, channel=channel, data=data)
+                return _create_event()
 
 
 class FileWriter(object):

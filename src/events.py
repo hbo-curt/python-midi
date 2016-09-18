@@ -114,6 +114,12 @@ class NoteOnEvent(NoteEvent):
     name = 'Note On'
     __slots__ = ['duration']
 
+
+    def __init__(self, **kw):
+        self.duration=0     # default in event that it is not known yet
+        super(NoteOnEvent, self).__init__(**kw)
+
+
     def __repr__(self):
         return self.__baserepr__(['channel', 'pitch', 'velocity', 'duration'])
 
