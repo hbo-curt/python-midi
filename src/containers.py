@@ -3,6 +3,9 @@ from __future__ import division
 from pprint import pformat
 
 import bisect
+
+import math
+
 import events
 import util
 
@@ -11,10 +14,6 @@ class Pattern(list):
     def __init__(self, resolution=220, format=1, tracks=[]):
         self.format = format
         self.resolution = resolution
-        # division: 1=whole, 3/4=dotted, 2/3=triplet
-        # ratio: 1/64, 1/32 1/16...1, 2, 4
-        ratios=((pow(2, ratio) * division) for ratio in range(-6, 3) for division in (2/3, 3/4, 1))
-        self.quantized=[int(resolution*ratio) for ratio in ratios if int(resolution*ratio)>0]
         super(Pattern, self).__init__(tracks)
 
     #--- public api ---#
@@ -33,10 +32,16 @@ class Pattern(list):
         return TickConverter(tempos, self.resolution)
 
     def nearest_quantized_duration(self, duration):
-        for index in range(1, len(self.quantized)):
-            if duration<=self.quantized[index]:
-                return self.quantized[index] if self.quantized[index]-duration<duration-self.quantized[index-1] else self.quantized[index-1]
-        return self.quantized[-1]
+        if duration<=1:
+            return 1
+        power=int(math.floor(math.log(duration/self.resolution, 2)))
+        # division: 1=whole, 3/4=dotted, 2/3=triplet
+        ratios=((pow(2, ratio) * multiple) for ratio in range(power, power+2) for multiple in (2/3, 3/4, 1))
+        quantized=[int(self.resolution*ratio) for ratio in ratios if int(self.resolution*ratio)>0]
+        for index in range(1, len(quantized)):
+            if duration<=quantized[index]:
+                return quantized[index] if quantized[index]-duration<duration-quantized[index-1] else quantized[index-1]
+        return quantized[-1]
 
     #--- private api ---#
     def __repr__(self):
