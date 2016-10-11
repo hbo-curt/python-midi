@@ -32,15 +32,23 @@ class Pattern(list):
         return TickConverter(tempos, self.resolution)
 
     def nearest_quantized_duration(self, duration):
+        """
+        :param duration: length in PPQs to quantize
+        :return:
+        """
         if duration<=1:
             return 1
         power=int(math.floor(math.log(duration/self.resolution, 2)))
-        # division: 1=whole, 3/4=dotted, 2/3=triplet
-        ratios=((pow(2, ratio) * multiple) for ratio in range(power, power+2) for multiple in (2/3, 3/4, 1))
-        quantized=[int(self.resolution*ratio) for ratio in ratios if int(self.resolution*ratio)>0]
+        # if we are within a single quarter then get real granular.  beyond that we are going to assume quantizing
+        # to the nearest: whole, quarter, triplet*1, half, triplet*2, dotted half
+        if power<1:
+            ratios=((pow(2, ratio)*multiple) for ratio in range(power, power+2) for multiple in (2/3, 3/4, 1))
+        else:
+            ratios=(duration//self.resolution+ratio for ratio in (0, 1/4, 1/3, 1/2, 2/3, 3/4, 1))
+        quantized=[int(self.resolution*ratio) for ratio in ratios]
         for index in range(1, len(quantized)):
             if duration<=quantized[index]:
-                return quantized[index] if quantized[index]-duration<duration-quantized[index-1] else quantized[index-1]
+                return quantized[index] if quantized[index]-duration<=duration-quantized[index-1] else quantized[index-1]
         return quantized[-1]
 
     #--- private api ---#
