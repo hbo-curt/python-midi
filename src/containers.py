@@ -40,7 +40,7 @@ class Pattern(list):
             return 1
         power=int(math.floor(math.log(duration/self.resolution, 2)))
         # if we are within a single quarter then get real granular.  beyond that we are going to assume quantizing
-        # to the nearest: whole, quarter, triplet*1, half, triplet*2, dotted half
+        # to the nearest ratios below.
         if power<1:
             ratios=((pow(2, ratio)*multiple) for ratio in range(power, power+2) for multiple in (2/3, 3/4, 1))
         else:
