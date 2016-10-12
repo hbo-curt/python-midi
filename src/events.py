@@ -1,3 +1,4 @@
+import copy
 import math
 
 class EventRegistry(object):
@@ -37,11 +38,11 @@ class AbstractEvent(object):
         for key in kw:
             setattr(self, key, kw[key])
 
-    def __copy__(self, keys=tuple()):
+    def __deepcopy__(self, memo, keys=tuple()):
         kargs={}
-        for key in keys:
-            kargs[key]=getattr(self, key)
-        return EventRegistry.Events[self.statusmsg](offset=self.offset, data=self.data, **kargs)
+        for key in keys+('offset', 'data'):
+            kargs[key]=copy.deepcopy(getattr(self, key), memo)
+        return EventRegistry.Events[self.statusmsg](**kargs)
 
     def __baserepr__(self, keys=tuple()):
         keys = ('offset',) + keys + ('data',)
@@ -67,8 +68,8 @@ class Event(AbstractEvent):
             kw['channel'] = 0
         super(Event, self).__init__(**kw)
 
-    def __copy__(self, keys=tuple()):
-        return super(Event, self).__copy__(keys + ('channel',))
+    def __deepcopy__(self, memo, keys=tuple()):
+        return super(Event, self).__deepcopy__(memo, keys + ('channel',))
 
     def __repr__(self):
         return self.__baserepr__(('channel',))
@@ -127,8 +128,8 @@ class NoteOnEvent(NoteEvent):
         self.duration=0     # default in event that it is not known yet
         super(NoteOnEvent, self).__init__(**kw)
 
-    def __copy__(self, keys=tuple()):
-        return super(NoteOnEvent, self).__copy__(keys + ('duration',))
+    def __deepcopy__(self, memo, keys=tuple()):
+        return super(NoteOnEvent, self).__deepcopy__(memo, keys + ('duration',))
 
     def __repr__(self):
         return self.__baserepr__(('channel', 'pitch', 'velocity', 'duration'))
@@ -317,8 +318,8 @@ class SetTempoEvent(MetaEvent):
     length = 3
     __slots__ = ['bpm', 'mpqn']
 
-    def __copy__(self, keys=tuple()):
-        return super(SetTempoEvent, self).__copy__(keys + ('bpm', 'mpqn'))
+    def __deepcopy__(self, memo, keys=tuple()):
+        return super(SetTempoEvent, self).__deepcopy__(memo, keys + ('bpm', 'mpqn'))
 
     def get_bpm(self):
         """

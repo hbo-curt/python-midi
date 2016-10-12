@@ -22,12 +22,16 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(event.duration, 2)
         self.assertEqual(event.velocity, 3)
         self.assertEqual(event.pitch, 4)
-        self.assertEqual(event.data, [4, 3])
+        self.assertListEqual(event.data, [4, 3])
 
     def test_clone(self):
         event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
-        clone=copy.copy(event)
-        self.assertNotEqual(event, clone)
+        clone=copy.deepcopy(event)
+        self.assertNotEqual(id(event), id(clone))
+        self.assertEqual(event.channel, clone.channel)
+        self.assertEqual(event.offset, clone.offset)
+        self.assertEqual(event.duration, clone.duration)
+        self.assertListEqual(event.data, clone.data)
 
 class TestContainers(unittest.TestCase):
     def test_track_insert(self):
