@@ -1,4 +1,6 @@
 from __future__ import division
+
+import copy
 import unittest
 import midi
 
@@ -22,6 +24,10 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(event.pitch, 4)
         self.assertEqual(event.data, [4, 3])
 
+    def test_clone(self):
+        event=midi.NoteOnEvent(channel=0, offset=1, duration=2, pitch=4, velocity=3)
+        clone=copy.copy(event)
+        self.assertNotEqual(event, clone)
 
 class TestContainers(unittest.TestCase):
     def test_track_insert(self):

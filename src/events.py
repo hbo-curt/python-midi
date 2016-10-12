@@ -37,8 +37,14 @@ class AbstractEvent(object):
         for key in kw:
             setattr(self, key, kw[key])
 
-    def __baserepr__(self, keys=[]):
-        keys = ['offset'] + keys + ['data']
+    def __copy__(self, keys=tuple()):
+        kargs={}
+        for key in keys:
+            kargs[key]=getattr(self, key)
+        return EventRegistry.Events[self.statusmsg](offset=self.offset, data=self.data, **kargs)
+
+    def __baserepr__(self, keys=tuple()):
+        keys = ('offset',) + keys + ('data',)
         body = []
         for key in keys:
             val = getattr(self, key)
@@ -61,8 +67,11 @@ class Event(AbstractEvent):
             kw['channel'] = 0
         super(Event, self).__init__(**kw)
 
+    def __copy__(self, keys=tuple()):
+        return super(Event, self).__copy__(keys + ('channel',))
+
     def __repr__(self):
-        return self.__baserepr__(['channel'])
+        return self.__baserepr__(('channel',))
 
     def is_event(cls, statusmsg):
         return (cls.statusmsg == (statusmsg & 0xF0))
@@ -106,7 +115,7 @@ class NoteEvent(Event):
     velocity = property(get_velocity, set_velocity)
 
     def __repr__(self):
-        return self.__baserepr__(['channel', 'pitch', 'velocity'])
+        return self.__baserepr__(('channel', 'pitch', 'velocity'))
 
 
 class NoteOnEvent(NoteEvent):
@@ -114,14 +123,15 @@ class NoteOnEvent(NoteEvent):
     name = 'Note On'
     __slots__ = ['duration']
 
-
     def __init__(self, **kw):
         self.duration=0     # default in event that it is not known yet
         super(NoteOnEvent, self).__init__(**kw)
 
+    def __copy__(self, keys=tuple()):
+        return super(NoteOnEvent, self).__copy__(keys + ('duration',))
 
     def __repr__(self):
-        return self.__baserepr__(['channel', 'pitch', 'velocity', 'duration'])
+        return self.__baserepr__(('channel', 'pitch', 'velocity', 'duration'))
 
 
 class NoteOffEvent(NoteEvent):
@@ -230,7 +240,7 @@ class MetaEventWithText(MetaEvent):
             self.text = ''.join(chr(datum) for datum in self.data)
 
     def __repr__(self):
-        return self.__baserepr__(['text'])
+        return self.__baserepr__(('text',))
 
 
 class TextMetaEvent(MetaEventWithText):
@@ -307,6 +317,9 @@ class SetTempoEvent(MetaEvent):
     length = 3
     __slots__ = ['bpm', 'mpqn']
 
+    def __copy__(self, keys=tuple()):
+        return super(SetTempoEvent, self).__copy__(keys + ('bpm', 'mpqn'))
+
     def get_bpm(self):
         """
         beats/minute
@@ -337,7 +350,7 @@ class SetTempoEvent(MetaEvent):
     spqn = property(get_spqn)
 
     def __repr__(self):
-        return self.__baserepr__(['bpm'])
+        return self.__baserepr__(('bpm',))
 
 
 class SmpteOffsetEvent(MetaEvent):
