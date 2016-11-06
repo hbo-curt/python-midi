@@ -5,7 +5,7 @@ import setuptools.command.install
 
 __base__={
     'name': 'midi',
-    'version': '0.3.7',
+    'version': '0.3.8',
     'description': 'Python MIDI API',
     'author': 'giles hall',
     'author_email': 'ghall@csh.rit.edu',
