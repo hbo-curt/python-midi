@@ -84,6 +84,20 @@ class TestPattern(unittest.TestCase):
         for v in values:
             self.assertEqual(pattern.nearest_quantized_duration(v[0]), v[1])
 
+    def test_next_event(self):
+        track=midi.Track([
+            midi.AbstractEvent(offset=0),
+            midi.AbstractEvent(offset=0),
+            midi.AbstractEvent(offset=1)
+        ])
+        event=track.next_event(0)
+        self.assertEqual(event, track[0])
+        event=track.next_event(0, 1)
+        self.assertEqual(event, track[1])
+        event=track.next_event(1)
+        self.assertEqual(event, track[2])
+
+
 class TestTickConverter(unittest.TestCase):
     def setUp(self):
         # tempo.mid:
