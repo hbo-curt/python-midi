@@ -33,6 +33,11 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(event.duration, clone.duration)
         self.assertListEqual(event.data, clone.data)
 
+    def test_meta_event_with_text(self):
+        event=midi.TextMetaEvent(text="abc")
+        self.assertListEqual(event.data, [97, 98, 99])
+
+
 class TestContainers(unittest.TestCase):
     def test_track_insert(self):
         track=midi.Track()

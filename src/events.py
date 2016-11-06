@@ -235,10 +235,14 @@ class SequenceNumberMetaEvent(MetaEvent):
 
 
 class MetaEventWithText(MetaEvent):
+    length = 'varlen'
+
     def __init__(self, **kw):
         super(MetaEventWithText, self).__init__(**kw)
         if 'text' not in kw:
             self.text = ''.join(chr(datum) for datum in self.data)
+        elif 'data' not in kw:
+            self.data = [ord(c) for c in kw["text"]]
 
     def __repr__(self):
         return self.__baserepr__(('text',))
@@ -247,42 +251,34 @@ class MetaEventWithText(MetaEvent):
 class TextMetaEvent(MetaEventWithText):
     name = 'Text'
     metacommand = 0x01
-    length = 'varlen'
 
 class CopyrightMetaEvent(MetaEventWithText):
     name = 'Copyright Notice'
     metacommand = 0x02
-    length = 'varlen'
 
 class TrackNameEvent(MetaEventWithText):
     name = 'Track Name'
     metacommand = 0x03
-    length = 'varlen'
 
 class InstrumentNameEvent(MetaEventWithText):
     name = 'Instrument Name'
     metacommand = 0x04
-    length = 'varlen'
 
 class LyricsEvent(MetaEventWithText):
     name = 'Lyrics'
     metacommand = 0x05
-    length = 'varlen'
 
 class MarkerEvent(MetaEventWithText):
     name = 'Marker'
     metacommand = 0x06
-    length = 'varlen'
 
 class CuePointEvent(MetaEventWithText):
     name = 'Cue Point'
     metacommand = 0x07
-    length = 'varlen'
 
 class ProgramNameEvent(MetaEventWithText):
     name = 'Program Name'
     metacommand = 0x08
-    length = 'varlen'
 
 class UnknownMetaEvent(MetaEvent):
     name = 'Unknown'
