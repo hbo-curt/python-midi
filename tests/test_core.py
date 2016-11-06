@@ -96,6 +96,8 @@ class TestPattern(unittest.TestCase):
         self.assertEqual(event, track[1])
         event=track.next_event(1)
         self.assertEqual(event, track[2])
+        event=track.next_event(2)
+        self.assertEqual(event, None)
 
 
 class TestTickConverter(unittest.TestCase):
