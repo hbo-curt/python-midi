@@ -85,8 +85,11 @@ class Track(list):
         self.insert(index, event)
 
     def next_event(self, offset, index_from=0):
-        index = util.bisect_left(a=self, x=offset, lo=index_from, vof=lambda o: o.offset)
+        index = self.next_event_index(offset, index_from)
         return self[index] if index>-1 else None
+
+    def next_event_index(self, offset, index_from=0):
+        return util.bisect_left(a=self, x=offset, lo=index_from, vof=lambda o: o.offset)
 
     def get_text(self, metacommand, dfault=None):
         result=getattr(util.find(lambda e: isinstance(e, events.MetaEventWithText) and e.metacommand==metacommand, self), "text", None)
